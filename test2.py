@@ -1,9 +1,10 @@
 import speech_recognition as sr
 import pyttsx3
+import sys  # Import the sys module
 
 # Define the wake words
-WAKE_WORDS = ["nova", "hey nova", "are you there nova"]
-EXIT_COMMANDS = ["close", "shut down", "exit"]
+WAKE_WORDS = ["nova", "hey nova", "are you there nova", "hello"]
+EXIT_COMMANDS = ["close", "shutdown", "exit"]
 
 def get_female_voice(engine):
     voices = engine.getProperty('voices')
@@ -19,21 +20,21 @@ def speak_text(text):
 
 def main():
     recognizer = sr.Recognizer()
-    program_active = True  # Flag to keep the program running
 
+    program_active = True
     while program_active:
         try:
             with sr.Microphone() as source:
                 print("Listening... Say something:")
                 recognizer.adjust_for_ambient_noise(source)
-                audio = recognizer.listen(source, timeout=5, phrase_time_limit=5)
+                audio = recognizer.listen(source, timeout=5, phrase_time_limit=2)
 
             text = recognizer.recognize_google(audio).lower()
 
             # Check if any wake word is in the recognized text
             if any(wake_word in text for wake_word in WAKE_WORDS):
-                response = "Yes, master. How can I help you?"
-                print(f"Athena: {response}")
+                response = "Yes master, How can I help you?"
+                print(f"NOVA: {response}")
                 speak_text(response)
 
                 # Listen for a command (create a new source)
@@ -47,13 +48,14 @@ def main():
                 # Check for exit commands
                 if any(exit_command in command for exit_command in EXIT_COMMANDS):
                     response = "Have a good day!"
-                    print(f"Athena: {response}")
+                    print(f"NOVA: {response}")
                     speak_text(response)
                     program_active = False  # Exit the program
                 else:
-                    # Provide responses based on recognized commands
                     if "good morning" in command or "morning" in command:
                         response = "Good morning!"
+                    elif "hear me" in command or "listen to me" in command:
+                        response = "Yes master, I am listening to you."
                     elif "who are you" in command or "about yourself" in command:
                         response = "I'm just a computer program, but thanks for asking!"
                     elif "thank you" in command:
@@ -62,19 +64,19 @@ def main():
                         response = "I'm not sure how to respond to that."
 
                     print(f"You said: {command}")
-                    print(f"Athena: {response}")
+                    print(f"NOVA: {response}")
                     speak_text(response)
 
         except sr.WaitTimeoutError:
-            response = "Timeout: No speech detected."
+            response = "Timeout: No speech detected. Please say again..."
             print(response)
             speak_text(response)
         except sr.UnknownValueError:
-            response = "Sorry, I couldn't understand what you said."
+            response = "Sorry, I couldn't understand what you said. Please say again..."
             print(response)
             speak_text(response)
         except sr.RequestError as e:
-            response = f"Sorry, there was an error with the request: {str(e)}"
+            response = f"Sorry, there was an error with the request: {str(e)}. Please say again..."
             print(response)
             speak_text(response)
 
