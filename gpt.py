@@ -2,6 +2,8 @@ import speech_recognition as sr
 import pyttsx3
 import nltk
 from nltk.tokenize import word_tokenize
+import os
+import openai
 
 # Define wake words
 WAKE_WORDS = ["kotha", "hi kotha", "hey kotha", "hello"]
@@ -9,6 +11,11 @@ EXIT_COMMANDS = ["close", "shutdown", "exit", "terminate"]
 
 # Initialize NLTK
 nltk.download("punkt")
+
+# Initialize OpenAi
+os.environ["OPEN_AI_API"] = "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"
+openai.organization = "org-0cAwwpLXyuaKcOBiUk91p25c"
+openai.api_key = os.getenv("OPEN_AI_API")
 
 def get_female_voice(engine):
     voices = engine.getProperty('voices')
@@ -34,12 +41,12 @@ def main():
     while True:
         try:
             with sr.Microphone() as source:
-                print("Listening...")  # Print "Listening..." message when actively listening
+                print("Listening...")
                 recognizer.adjust_for_ambient_noise(source)
                 audio = recognizer.listen(source, timeout=10, phrase_time_limit=5)
 
             text = recognizer.recognize_google(audio).lower()
-            print(f"You: {text}")  # Print what you say to Kotha
+            print(f"You: {text}")
 
             # Check if the wake word is recognized
             if any(wake_word in text for wake_word in WAKE_WORDS) and not program_active:
@@ -47,7 +54,7 @@ def main():
                 response = "Yes, I'm here. How can I assist you today?"
                 speak_text(response)
                 print("Kotha: " + response)
-                continue  # Skip the rest of the loop for wake word
+                continue
 
             # If program_active is False, continue listening for wake word
             if not program_active:
@@ -63,16 +70,23 @@ def main():
 
             # Check for exit commands
             elif any(exit_command in text for exit_command in EXIT_COMMANDS):
-                response = "Have a good day, master!"
+                response = "Have a good day master!"
                 print(response)
                 speak_text(response)
                 break  # Exit the program
             
             else:
-                # Generate a response for not understanding
-                not_understood_response = "I'm sorry, I didn't quite catch that. Can you please repeat?"
-                print(f"Kotha: {not_understood_response}")
-                speak_text(not_understood_response)
+                response = openai.ChatCompletion.create(
+                    model="gpt-3.5-turbo",
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": text + ' and reply with short description and natural as a human reply if possible.'
+                        }
+                    ]
+                )
+                print(f"Kotha: {response['choices'][0]['message']['content']}")
+                speak_text(response['choices'][0]['message']['content'])
 
         except sr.WaitTimeoutError:
             pass  # Continue listening
